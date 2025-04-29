@@ -22,12 +22,12 @@ Queens2023_Filtered <- subset(
     "SALE.PRICE",
     "LAND..SQUARE.FEET",
     "GROSS..SQUARE.FEET",
-    "BUILDING.CLASS.AT.TIME.OF.SALE"
+    "BUILDING.CLASS.AT.TIME.OF.SALE", 
+    "BUILDING.CLASS.CATEGORY"
   )
 )
 
-
-head(Queens2023_Filtered)
+#head(Queens2023_Filtered)
 
 # Alternatively, both dimensions (rows, cols)
 dim(Queens2023_Filtered)   # first element is rows, second is columns
@@ -46,23 +46,35 @@ Queens2023_Clean$LAND..SQUARE.FEET <- as.numeric(
   gsub(",", "", as.character(Queens2023_Clean$LAND..SQUARE.FEET))
 )
 
+nrow(Queens2023_Clean)
+Queens2023_Clean <- subset(
+  Queens2023_Clean,
+  BUILDING.CLASS.CATEGORY %in% c(
+    "01 ONE FAMILY DWELLINGS",
+    "02 TWO FAMILY DWELLINGS",
+    "03 THREE FAMILY DWELLINGS"
+  )
+)
+nrow(Queens2023_Clean)
 
 
 
 # Check that all rows are now complete
-nrow(Queens2023_Clean)
-head(Queens2023_Filtered)
+#nrow(Queens2023_Clean)
+#head(Queens2023_Filtered)
+print('Queens2023_Clean head: ')
 head(Queens2023_Clean)
-colnames(Queens2023_Clean)
+#colnames(Queens2023_Clean)
 
 
 
 Queens2023_Model <- lm(
     SALE.PRICE ~
-    TOTAL..UNITS +                       # quantitative
-    YEAR.BUILT +                          # quantitative
-    LAND..SQUARE.FEET +                  # quantitative
-    GROSS..SQUARE.FEET,                  # quantitative
+    #YEAR.BUILT +                          # quantitative                # quantitative
+    GROSS..SQUARE.FEET +                   # quantitative
+    #LAND..SQUARE.FEET 
+    factor(BUILDING.CLASS.CATEGORY)  +
+    factor(ZIP.CODE),
   data = Queens2023_Clean
 )
 
@@ -70,10 +82,27 @@ Queens2023_Model <- lm(
 # View the coefficient estimates and model summary
 #summary(Queens2023_Model)
 
-#formula(Queens2023_Model)
+formula(Queens2023_Model)
 
 coef(Queens2023_Model)
 
-
 #class(Queens2023_Clean$GROSS..SQUARE.FEET)    
-#class(Queens2023_Clean$LAND..SQUARE.FEET)   
+#class(Queens2023_Clean$LAND..SQUARE.FEET)  
+
+
+
+# Extract once
+res <- residuals(Queens2023_Model)
+fit <- fitted(Queens2023_Model)
+
+# Scatter + zero‐line
+plot(fit, res,
+     xlab = "Fitted values",
+     ylab = "Residuals",
+     main = "Residuals vs Fitted")
+abline(h = 0, lty = 2)
+
+# Add a lowess smooth curve
+lines(lowess(fit, res), col = "red", lwd = 2)
+
+summary(Queens2023_Model)
